@@ -79,16 +79,20 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
 
   const onSubmit: SubmitHandler<LoginData | RegisterData> = async (data) => {
     if (isLogin) {
-      isLoading(true);
-      const res = await axios.post("/api/login", {
-        username: data.username,
-        password: data.password,
-      });
-      isLoading(false);
-      if (res.status === 200) {
+      try {
+        isLoading(true);
+        const res = await axios.post("/api/login", {
+          username: data.username,
+          password: data.password,
+        });
+        isLoading(false);
         router.refresh();
-        toast.success("Login successful");
-        close();
+        if (res.status === 200) {
+          toast.success("Login successful");
+          toggle();
+        }
+      } catch (error) {
+        toast.error("Login failed");
       }
     } else {
       isLoading(true);

@@ -15,9 +15,12 @@ datasource db {
 
 model User {
   id        String   @map("_id") @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String
+
+  username  String?  @unique
+
+  password  String?
+
   createdAt DateTime @default(now())
+  
   updatedAt DateTime @default(now())
 }
