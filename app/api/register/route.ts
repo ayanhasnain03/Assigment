@@ -5,12 +5,10 @@ import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    // Parse the incoming JSON request body
     const body = await request.json();
-    const { username, password, name } = body;
+    const { username, password } = body;
 
-    // Validate required fields
-    if (!username || !password || !name) {
+    if (!username || !password) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -34,17 +32,12 @@ export async function POST(request: Request) {
       data: {
         username,
         password: hashedPassword,
-        name,
       },
     });
 
-    // Return success response
     return NextResponse.json({ message: "User created successfully" });
   } catch (error) {
-    // Log the error for debugging
     console.error("Registration Error:", error);
-
-    // Return generic error response
     return NextResponse.json(
       { error: "An unexpected error occurred" },
       { status: 500 }
