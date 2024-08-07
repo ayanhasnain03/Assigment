@@ -4,9 +4,9 @@ import bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
   try {
-    const { username, newPassword } = await request.json();
+    const { username, oldPassword, newPassword } = await request.json();
 
-    if (!username || !newPassword) {
+    if (!username || !oldPassword || !newPassword) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -16,6 +16,15 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { error: "Old password is incorrect" },
+        { status: 400 }
+      );
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

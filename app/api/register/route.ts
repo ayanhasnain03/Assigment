@@ -1,4 +1,3 @@
-// /app/api/register/route.js
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/prisma";
@@ -6,13 +5,13 @@ import prisma from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username, password, name } = body; // Add name to destructuring
 
-    if (!username || !password) {
+    if (!username || !password || !name) {
+      // Check for all required fields
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { username },
     });
@@ -24,14 +23,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the new user
     const user = await prisma.user.create({
       data: {
         username,
         password: hashedPassword,
+        name, // Include name field
       },
     });
 
