@@ -22,7 +22,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${inter.className} relative`}>
         <Navbar currentUser={currentUser?.id} />
-        <AuthModel currentUser={currentUser?.id} />
+        <AuthModel />
         {children}
         <Toaster />
       </body>

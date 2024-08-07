@@ -1,6 +1,6 @@
 "use client";
 import { useModel } from "@/hooks/useModel";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { CgClose } from "react-icons/cg";
 import { useForm, SubmitHandler, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Loader from "./Loader";
+import ReCAPTCHA from "react-google-recaptcha";
+
 const loginSchema = z.object({
   username: z.string().min(5, "Username is required"),
   password: z
@@ -49,10 +51,12 @@ const isLoginFormErrors = (
   errors: FieldErrors<LoginData | RegisterData>
 ): errors is FieldErrors<LoginData> => !("name" in errors);
 
-const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
+const AuthModel = () => {
   const { isLogin, isOpen, close, toggle } = useModel();
-  const [loading, isLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState<boolean>(false);
   const router = useRouter();
+
   const {
     register: formRegister,
     handleSubmit,
@@ -65,9 +69,8 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
 
   const isRegisterData = (
     data: LoginData | RegisterData
-  ): data is RegisterData => {
-    return "name" in data;
-  };
+  ): data is RegisterData => "name" in data;
+
   const onClose = useCallback(() => {
     close();
   }, [close]);
@@ -77,44 +80,53 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
     reset();
   }, [toggle, reset]);
 
+  const onCaptchaChange = (value: string | null) => {
+    setIsCaptchaVerified(!!value);
+  };
+
   const onSubmit: SubmitHandler<LoginData | RegisterData> = async (data) => {
-    if (isLogin) {
-      try {
-        isLoading(true);
+    if (!isCaptchaVerified) {
+      toast.error("Please complete the reCAPTCHA");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const recaptchaToken = isCaptchaVerified ? "some-recaptcha-token" : ""; // Placeholder, handle actual token
+
+      if (isLogin) {
         const res = await axios.post("/api/login", {
           username: data.username,
           password: data.password,
+          recaptchaToken,
         });
-        isLoading(false);
-        router.refresh();
+
         if (res.status === 200) {
-          toast.success(res?.data?.message || "Registration successful");
+          toast.success(res?.data?.message || "Login successful");
           close();
         }
-      } catch (error) {
-        toast.error("Login failed");
-        isLoading(false);
-      }
-    } else {
-      try {
-        isLoading(true);
+      } else {
         const res = await axios.post("/api/register", {
           name: isRegisterData(data) ? data.name : "",
           username: data.username,
           password: data.password,
+          recaptchaToken,
         });
-        isLoading(false);
-        router.refresh();
+
         if (res.status === 200) {
           toast.success(res?.data?.message || "Registration successful");
           toggle();
         }
-      } catch (error) {
-        toast.error("Registration failed");
-        isLoading(false);
       }
+
+      router.refresh();
+      reset();
+    } catch (error) {
+      toast.error(isLogin ? "Login failed" : "Registration failed");
+    } finally {
+      setLoading(false);
     }
-    reset();
   };
 
   return (
@@ -123,7 +135,7 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-20 transition-opacity duration-300">
           <div
             className={`bg-white w-full max-w-lg ${
-              isLogin ? "h-[30rem]" : "h-[37rem]"
+              isLogin ? "h-[38rem]" : "h-[37rem]"
             } p-8 rounded-lg shadow-lg transition-transform duration-300 transform ${
               isOpen ? "scale-100" : "scale-90"
             }`}
@@ -211,9 +223,16 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
                       <a href="/forgot-password">Forgot password?</a>
                     </p>
                   )}
+                  <ReCAPTCHA
+                    sitekey={
+                      process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY as string
+                    }
+                    onChange={onCaptchaChange}
+                  />
                   <button
+                    disabled={loading || isCaptchaVerified === false}
                     type="submit"
-                    className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    className="w-full disabled:bg-gray-300 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
                   >
                     {isLogin ? "Login" : "Signup"}
                   </button>
