@@ -10,7 +10,6 @@ function getTokenFromCookies(): string | null {
 
 function verifyToken(token: string): { id: string } | null {
   try {
-    // Decode and verify the JWT token
     return jwt.verify(token, process.env.JWT_SECRET as string) as {
       id: string;
     };
@@ -33,7 +32,6 @@ export default async function getCurrentUser() {
   }
 
   try {
-    // Fetch the user from the database using Prisma
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
     });

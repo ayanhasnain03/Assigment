@@ -62,7 +62,7 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
     mode: "onSubmit",
   });
-  // Type guard to check if data is RegisterData
+
   const isRegisterData = (
     data: LoginData | RegisterData
   ): data is RegisterData => {
