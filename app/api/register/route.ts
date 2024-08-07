@@ -5,10 +5,9 @@ import prisma from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, password, name } = body; // Add name to destructuring
+    const { username, password, name } = body;
 
     if (!username || !password || !name) {
-      // Check for all required fields
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
       data: {
         username,
         password: hashedPassword,
-        name, // Include name field
+        name,
       },
     });
 

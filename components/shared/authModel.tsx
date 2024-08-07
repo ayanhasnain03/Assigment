@@ -88,24 +88,30 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
         isLoading(false);
         router.refresh();
         if (res.status === 200) {
-          toast.success("Login successful");
-          toggle();
+          toast.success(res?.data?.message || "Registration successful");
+          close();
         }
       } catch (error) {
         toast.error("Login failed");
+        isLoading(false);
       }
     } else {
-      isLoading(true);
-      const res = await axios.post("/api/register", {
-        name: isRegisterData(data) ? data.name : "",
-        username: data.username,
-        password: data.password,
-      });
-      isLoading(false);
-      router.refresh();
-      if (res.status === 201) {
-        toast.success("Signup successful");
-        toggle();
+      try {
+        isLoading(true);
+        const res = await axios.post("/api/register", {
+          name: isRegisterData(data) ? data.name : "",
+          username: data.username,
+          password: data.password,
+        });
+        isLoading(false);
+        router.refresh();
+        if (res.status === 200) {
+          toast.success(res?.data?.message || "Registration successful");
+          toggle();
+        }
+      } catch (error) {
+        toast.error("Registration failed");
+        isLoading(false);
       }
     }
     reset();
@@ -206,7 +212,6 @@ const AuthModel = ({ currentUser }: { currentUser: string | undefined }) => {
                     </p>
                   )}
                   <button
-                    disabled={loading}
                     type="submit"
                     className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                   >
