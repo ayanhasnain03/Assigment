@@ -1,41 +1,36 @@
-// app/api/reset-password/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcrypt";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { username, oldPassword, newPassword } = body;
+export async function POST(request: Request) {
+  try {
+    const { username, newPassword } = await request.json();
 
-  if (!username || !oldPassword || !newPassword) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-  }
+    if (!username || !newPassword) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
 
-  // Find user by username
-  const user = await prisma.user.findUnique({
-    where: { username },
-  });
+    const user = await prisma.user.findUnique({
+      where: { username },
+    });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-  // Check old password
-  const isMatch = await bcrypt.compare(oldPassword, user.password);
-  if (!isMatch) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { username },
+      data: { password: hashedPassword },
+    });
+
+    return NextResponse.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
     return NextResponse.json(
-      { error: "Old password is incorrect" },
-      { status: 400 }
+      { error: "An unexpected error occurred" },
+      { status: 500 }
     );
   }
-
-  // Hash new password and update it
-  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-  await prisma.user.update({
-    where: { username },
-    data: { password: hashedNewPassword },
-  });
-
-  return NextResponse.json({ message: "Password updated successfully" });
 }
