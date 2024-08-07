@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       where: { username },
     });
 
-    if (!user) {
+    if (!user || !user.password) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (!passwordMatch) {
       return NextResponse.json(
         { error: "Old password is incorrect" },
-        { status: 400 }
+        { status: 401 }
       );
     }
 
